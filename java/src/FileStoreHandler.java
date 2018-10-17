@@ -41,7 +41,7 @@ public class FileStoreHandler implements FileStore.Iface {
      */
     @Override
     public void writeFile(RFile rFile) throws SystemException, TException {
-        System.out.println("\n ------------------------FileStoreHandler : Inside writeFile------------------------");
+//        System.out.println("\n ------------------------FileStoreHandler : Inside writeFile------------------------");
         
         String filename = rFile.getMeta().getFilename();
         
@@ -51,7 +51,7 @@ public class FileStoreHandler implements FileStore.Iface {
 //        System.out.println("SHA256_fileId : " + SHA256_fileId);
         
         NodeID nodeID = findSucc(SHA256_fileId);
-        System.out.println("Destination NodeId :: " + nodeID.toString());
+//        System.out.println("Destination NodeId :: " + nodeID.toString());
 //        System.out.println("Current NodeID :: " + currentNodeID);
         /**
          * If the server does not own the file id, the server is not the file
@@ -72,7 +72,7 @@ public class FileStoreHandler implements FileStore.Iface {
          */
         if (!metaInformation.containsKey(file.getName())) {
             
-            System.out.println("-------- file does not exist --------");
+//            System.out.println("-------- file does not exist --------");
             rFile.setContent(rFileContent);
             rFileMetadata.setVersion(0);
             
@@ -84,7 +84,7 @@ public class FileStoreHandler implements FileStore.Iface {
 //            System.out.println("file not exist --- RFile Object " + rFile.toString());
             
         } else {
-            System.out.println("-------- file exist --------");
+//            System.out.println("-------- file exist --------");
             
             /**
              * If the filename exists on the server - the file contents should be
@@ -120,7 +120,7 @@ public class FileStoreHandler implements FileStore.Iface {
         } catch (IOException ex) {
             System.err.println("FileStoreHandler : Exception from writeFile." + ex.getMessage());
         }
-        System.out.println("--------------------------FileStoreHandler : DONE writeFile ------------------------\n\n");
+//        System.out.println("--------------------------FileStoreHandler : DONE writeFile ------------------------\n\n");
         
     }
     
@@ -336,11 +336,13 @@ public class FileStoreHandler implements FileStore.Iface {
     public String convertToSHA256(String key) {
         StringBuilder stringBuilder = new StringBuilder();
         try {
-            MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
-            messageDigest.update(key.getBytes());
-            byte[] byteArray = messageDigest.digest();
-            for (int i = 0; i < byteArray.length; i++) {
-                stringBuilder.append(String.format("%02x", byteArray[i]));
+            if (key != null && !key.isEmpty()) {
+                MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
+                messageDigest.update(key.trim().getBytes());
+                byte[] byteArray = messageDigest.digest();
+                for (int i = 0; i < byteArray.length; i++) {
+                    stringBuilder.append(String.format("%02x", byteArray[i]));
+                }
             }
         } catch (NoSuchAlgorithmException ex) {
             System.err.println("Exception occured while converting to SHA-256 : " + ex.getMessage());

@@ -139,11 +139,13 @@ public class Client {
     public static String convertToSHA256(String key) {
         StringBuilder stringBuilder = new StringBuilder();
         try {
-            MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
-            messageDigest.update(key.trim().getBytes());
-            byte[] byteArray = messageDigest.digest();
-            for (int i = 0; i < byteArray.length; i++) {
-                stringBuilder.append(String.format("%02x", byteArray[i]));
+            if (key != null && !key.isEmpty()) {
+                MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
+                messageDigest.update(key.trim().getBytes());
+                byte[] byteArray = messageDigest.digest();
+                for (int i = 0; i < byteArray.length; i++) {
+                    stringBuilder.append(String.format("%02x", byteArray[i]));
+                }
             }
 //            System.out.println("SHA-256 Converstion for the client ::  " + key + " : " + stringBuilder);
         } catch (NoSuchAlgorithmException ex) {
