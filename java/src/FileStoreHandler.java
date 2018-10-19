@@ -30,7 +30,6 @@ public class FileStoreHandler implements FileStore.Iface {
         String key = ip + ":" + port;
         currentNodeID = new NodeID(convertToSHA256(key), ip, port);
         metaInformation = new LinkedHashMap<String, RFile>();
-        
     }
     
     /**
@@ -42,74 +41,69 @@ public class FileStoreHandler implements FileStore.Iface {
     @Override
     public void writeFile(RFile rFile) throws SystemException, TException {
 //        System.out.println("\n ------------------------FileStoreHandler : Inside writeFile------------------------");
-        
-        String filename = rFile.getMeta().getFilename();
-        
-        File file = new File(filename);
-        
-        String SHA256_fileId = convertToSHA256(filename.trim());
-//        System.out.println("SHA256_fileId : " + SHA256_fileId);
-        
-        NodeID nodeID = findSucc(SHA256_fileId);
-//        System.out.println("Destination NodeId :: " + nodeID.toString());
-//        System.out.println("Current NodeID :: " + currentNodeID);
-        /**
-         * If the server does not own the file id, the server is not the file
-         * successor, a SystemException should be thrown
-         */
-        if (!nodeID.equals(currentNodeID)) {
-            throw new SystemException().setMessage("Exception from writeFile, the server does not own the file id.");
-        }
-        
-        String rFileContent = rFile.getContent();
-        
-        RFileMetadata rFileMetadata = rFile.getMeta();
-        String fileContentHash = "";
-        
-        /**
-         * If the filename does not exist on the server, a new file should be created
-         * with its version attribute set to 0.
-         */
-        if (!metaInformation.containsKey(file.getName())) {
-            
-//            System.out.println("-------- file does not exist --------");
-            rFile.setContent(rFileContent);
-            rFileMetadata.setVersion(0);
-            
-            if (rFileContent != null) {
-                fileContentHash = convertToSHA256(rFileContent.trim());
-                rFileMetadata.setContentHash(fileContentHash);
-            }
-            rFile.setMeta(rFileMetadata);
-//            System.out.println("file not exist --- RFile Object " + rFile.toString());
-            
-        } else {
-//            System.out.println("-------- file exist --------");
-            
+            String filename = rFile.getMeta().getFilename();
+            File file = new File(filename);
+            String SHA256_fileId = convertToSHA256(filename.trim());
+    //        System.out.println("SHA256_fileId : " + SHA256_fileId);
+            NodeID nodeID = findSucc(SHA256_fileId);
+    //        System.out.println("Destination NodeId :: " + nodeID.toString());
+    //        System.out.println("Current NodeID :: " + currentNodeID);
+          
             /**
-             * If the filename exists on the server - the file contents should be
-             * overwritten, and the version number should be incremented.
+             * If the server does not own the file id, the server is not the file
+             * successor, a SystemException should be thrown
              */
-            
-            RFile rFile_existing = metaInformation.get(file.getName());
-//            System.out.println("rFile_existing object : " + rFile_existing.toString());
-            RFileMetadata rFileMetadata_existing = rFile_existing.getMeta();
-            rFileMetadata_existing.setVersion(rFileMetadata_existing.getVersion() + 1);
-            //Overwrite rFileContent old content with new content
-            rFileContent = rFile.getContent();
-            fileContentHash = convertToSHA256(rFileContent.trim());
-            rFileMetadata_existing.setContentHash(fileContentHash);
-            
-            //RFILE
-            rFile_existing.setContent(rFileContent);
-            rFile_existing.setMeta(rFileMetadata_existing);
-            rFile = rFile_existing;
-//            System.out.println("file exist ---- RFile Object :: " + rFile.toString());
-        }
-        metaInformation.put(filename, rFile);
+            if (!nodeID.equals(currentNodeID)) {
+                System.err.println("The server does not own the file id.");
+                throw new SystemException().setMessage("The server does not own the file id.");
+            }
         
         try {
-            
+            String rFileContent = rFile.getContent();
+            RFileMetadata rFileMetadata = rFile.getMeta();
+            String fileContentHash = "";
+          
+            /**
+             * If the filename does not exist on the server, a new file should be created
+             * with its version attribute set to 0.
+             */
+            if (!metaInformation.containsKey(file.getName())) {
+    //            System.out.println("-------- file does not exist --------");
+                rFile.setContent(rFileContent);
+                rFileMetadata.setVersion(0);
+                
+                if (rFileContent != null) {
+                    fileContentHash = convertToSHA256(rFileContent.trim());
+                    rFileMetadata.setContentHash(fileContentHash);
+                }
+                rFile.setMeta(rFileMetadata);
+    //            System.out.println("file not exist --- RFile Object " + rFile.toString());
+                
+            } else {
+    //            System.out.println("-------- file exist --------");
+                
+                /**
+                 * If the filename exists on the server - the file contents should be
+                 * overwritten, and the version number should be incremented.
+                 */
+                
+                RFile rFile_existing = metaInformation.get(file.getName());
+    //            System.out.println("rFile_existing object : " + rFile_existing.toString());
+                RFileMetadata rFileMetadata_existing = rFile_existing.getMeta();
+                rFileMetadata_existing.setVersion(rFileMetadata_existing.getVersion() + 1);
+                //Overwrite rFileContent old content with new content
+                rFileContent = rFile.getContent();
+                fileContentHash = convertToSHA256(rFileContent.trim());
+                rFileMetadata_existing.setContentHash(fileContentHash);
+                
+                //RFILE
+                rFile_existing.setContent(rFileContent);
+                rFile_existing.setMeta(rFileMetadata_existing);
+                rFile = rFile_existing;
+    //            System.out.println("file exist ---- RFile Object :: " + rFile.toString());
+            }
+            metaInformation.put(filename, rFile);
+          
             FileWriter fileWriter = null;
             BufferedWriter bufferedWriter = null;
             fileWriter = new FileWriter(file, false);
@@ -118,10 +112,9 @@ public class FileStoreHandler implements FileStore.Iface {
             bufferedWriter.close();
             
         } catch (IOException ex) {
-            System.err.println("FileStoreHandler : Exception from writeFile." + ex.getMessage());
+            System.err.println("Exception occured from writeFile." + ex.getMessage());
         }
 //        System.out.println("--------------------------FileStoreHandler : DONE writeFile ------------------------\n\n");
-        
     }
     
     /**
@@ -134,55 +127,24 @@ public class FileStoreHandler implements FileStore.Iface {
     @Override
     public RFile readFile(String filename) throws SystemException, TException {
 //        System.out.println("\n------------------------ FileStoreHandler : Inside readFile ------------------------");
-        
-        String filenameHash = convertToSHA256(filename);
-        
-        NodeID node = findSucc(filenameHash);
-        
-        if (!(node.equals(currentNodeID))) {
-            throw new SystemException().setMessage("Exception from readFile, the server does not own the file id.");
-        }
-        
-        File file = new File(filename);
-        
-        if (!metaInformation.containsKey(file.getName())) {
-            throw new SystemException().setMessage("Exception while reading File : File does not exist on the server.");
-        }
-        
-        RFile existing_rFile = metaInformation.get(filename);
-//        System.out.println("Existing RFile :: " + existing_rFile.toString());
-        //            if (existing_rFile != null) {
-        //
-        //                RFileMetadata rFileMetadata = new RFileMetadata();
-        //
-        //                rFileMetadata.setFilename(file.getName());
-        //                rFileMetadata.setFilenameIsSet(true);
-        //
-        //                rFileMetadata.setVersion(existing_rFile.getMeta().getVersion());
-        //                rFileMetadata.setVersionIsSet(true);
-        //
-        //                rFileMetadata.setContentHash(existing_rFile.getMeta().getContentHash());
-        //                rFileMetadata.setContentHashIsSet(true);
-        //
-        //                System.out.println("ContentHash : " + existing_rFile.getMeta().getContentHash());
-        //                System.out.println("existing_rFile.getContent() : " + existing_rFile.getContent());
-        //
-        //                byte[] byteContent = Files.readAllBytes(Paths.get(filename));
-        //                String content = new String(byteContent);
-        //                System.out.println("File Content : " + content);
-        //                System.out.println("existing_rFile.getContent() : " + existing_rFile.getContent());
-        //
-        //                rFile.setContent(content);
-        //                rFile.setContentIsSet(true);
-        //
-        //                rFile.setMeta(rFileMetadata);
-        //                rFile.setMetaIsSet(true);
-        //            }
-//        System.out.println("------------------------ FileStoreHandler : done readFile ------------------------\n\n");
-        
-        return existing_rFile;
-        
+            String filenameHash = convertToSHA256(filename);
+            NodeID node = findSucc(filenameHash);            
+            if (!(node.equals(currentNodeID))) {
+                System.err.println("The server does not own the file id.");
+                throw new SystemException().setMessage("Exception from readFile, the server does not own the file id.");
+            }
+            
+            File file = new File(filename);
+            
+            if (!metaInformation.containsKey(file.getName())) {
+                System.err.println("File does not exist on the server.");
+                throw new SystemException().setMessage("Exception while reading File : File does not exist on the server.");
+            }
+            RFile existing_rFile = metaInformation.get(filename);
+            
+            return existing_rFile;
     }
+
     
     /**
      *
@@ -247,24 +209,23 @@ public class FileStoreHandler implements FileStore.Iface {
     public NodeID findPred(String key) throws SystemException, TException {
       //  System.out.println("\n ------------------  FileStoreHandler : Inside findPred ------------------ ");
         if (fingerTable == null) {
-            new SystemException()
-            .setMessage("Exception occured : Fingertable is not set, Please execute the init script.");
+            System.err.println("Fingertable is not set, Please execute the init script.");
+            throw new SystemException().setMessage("Exception occured : Fingertable is not set, Please execute the init script.");
         }
         NodeID currentNode = currentNodeID;
         NodeID successorNode = fingerTable.get(0);
         if (!inBetween(key, currentNode.getId(), successorNode.getId())) {
-//            System.out.println("fingerTable.size() :: " + fingerTable.size());
             for (int i = fingerTable.size() - 1; i > 0; i--) {
                 if (inBetween(fingerTable.get(i).getId(), currentNode.getId(), key)) {
-//                    System.out.println("------------ inside fingerTable condition  ::");
                     return recursive_findPred(key, fingerTable.get(i));
                 }
             }
         }
         
        // System.out.println("------------------  FileStoreHandler : Done findPred ------------------ \n ");
+
         return currentNode;
-        
+
     }
     
     
@@ -306,7 +267,7 @@ public class FileStoreHandler implements FileStore.Iface {
         } catch (TTransportException e) {
             System.err.println("Exception occured while establishing TTransport socket connection : " + e.getMessage());
         } catch (SystemException e) {
-            System.err.println("Exception occured while finding predecessor : " + e.getMessage());
+            System.err.println(e.getMessage());
         } catch (TException e) {
             System.err.println("Exception occured : " + e.getMessage());
         }
@@ -320,10 +281,10 @@ public class FileStoreHandler implements FileStore.Iface {
      */
     @Override
     public NodeID getNodeSucc() throws SystemException, TException {
-        
         if (fingerTable == null) {
+            System.err.println("Fingertable is not set, Please execute the init file.");
             throw new SystemException()
-            .setMessage("Exception while getting fingertable node successor. Please execute the init file.");
+            .setMessage("Exception while getting fingertable node successor.");
         }
         return fingerTable.get(0);
     }

@@ -55,34 +55,18 @@ public class Client {
 //        System.out.println("ContentHash of file name :: " + filenameHash);
         try {
             Path path = Paths.get(filename);
-//            System.out.println("Path :: " + path);
             byte[] byteContent = Files.readAllBytes(path);
             String content = new String(byteContent);
-//            System.out.println("Content from file :: " + content);
-
             String contentHash = convertToSHA256(content.trim());
-//            System.out.println("ContentHash of file content :: " + contentHash);
-            
             rFileMetadata.setContentHash(contentHash);
             rFileMetadata.setContentHashIsSet(true);
-            
-//            System.out.println("RFileMetadata object from Client :: " + rFileMetadata.toString());
-            
             rFile.setMeta(rFileMetadata);
-            
             rFile.setContent(content);
             rFile.setContentIsSet(true);
-//            System.out.println("RFile object from Client :: " + rFile.toString());
-
             NodeID destinationNode = client.findSucc(filenameHash);
-//            System.out.println("Destination Node from writeFileInClient :: " + destinationNode.toString());
-           
-            TTransport transport = new TSocket(destinationNode.getIp(), destinationNode.getPort());
-            transport.open();
-            TProtocol protocol = new TBinaryProtocol(transport);
-            client = new FileStore.Client(protocol);
+            System.out.println("Destination Node :: " + destinationNode.toString());
             client.writeFile(rFile);
-            
+
         } catch (IOException ex) {
             System.err.println("Exception occured while accessing file. File does not exist. " + ex.getMessage());
             System.exit(0);
@@ -90,7 +74,7 @@ public class Client {
             System.err.println("SystemException occured while writing file : " + ex.getMessage());
             System.exit(0);
         } catch (TException ex) {
-            System.err.println("TException occured while executing writeFileTesting() : " + ex.getMessage());
+            System.err.println("Exception occured writeFileInClient, Fingertable is not set. " + ex.getMessage());
             System.exit(0);
         }
 //        System.out.println(" -------------------------- Done writeFileInClient-------------------------- \n\n");
@@ -104,32 +88,26 @@ public class Client {
 //        System.out.println("Filename : " + filename);
 //        System.out.println("FilenameHash : " + filenameHash);
         try {
-            NodeID destinationNode = client.findSucc(filenameHash);
-//            System.out.println("destinationNode from readFileInClient : " + destinationNode.toString());
-            TTransport transport = new TSocket(destinationNode.getIp(), destinationNode.getPort());
-            transport.open();
-            TProtocol protocol = new TBinaryProtocol(transport);
-            client = new FileStore.Client(protocol);
-            RFile rFile = client.readFile(filename);
-            
-            if (rFile != null) {
-                String content = rFile.getContent();
-                int version = rFile.getMeta().getVersion();
-                String rFileFilename = rFile.getMeta().getFilename();
-                String contentHash = rFile.getMeta().getContentHash();
+                RFile rFile = client.readFile(filename);
                 
-                System.out.println("Successfully read the file.");
-                System.out.println("Filename : " + rFileFilename);
-                System.out.println("Version : " + version);
-                System.out.println("Content Hash : " + contentHash);
-                System.out.println("Content : " + content);
-                
-            }
+                if (rFile != null) {
+                    String content = rFile.getContent();
+                    int version = rFile.getMeta().getVersion();
+                    String rFileFilename = rFile.getMeta().getFilename();
+                    String contentHash = rFile.getMeta().getContentHash();
+                    
+                    System.out.println("Successfully read the file.");
+                    System.out.println("Filename : " + rFileFilename);
+                    System.out.println("Version : " + version);
+                    System.out.println("Content Hash : " + contentHash);
+                    System.out.println("Content : " + content);
+                }
+//            }
         } catch (SystemException e) {
             System.err.println("SystemException occured while reading file : " + e.getMessage());
             System.exit(0);
-        } catch (TException e) {
-            System.err.println("Exception occured in readFileInClient() : " + e.getMessage());
+        } catch (TException ex) {
+            System.err.println("Exception occured in readFileInClient, Fingertable is not set. " + ex.getMessage());
             System.exit(0);
         }
 //        System.out.println(" -------------------------- Done readFileInClient ------------------------- \n\n");
